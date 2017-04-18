@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Gamedev Canvas Workshop</title>
+    <style>
+    	* { padding: 0; margin: 0; }
+    	canvas { background: #eee; display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+
+<canvas id="myCanvas" width="480" height="320"></canvas>
+
+<script>
+	var canvas = document.getElementById('myCanvas');
+  var ctx = canvas.getContext('2d');
+
+  var score = 0;
+
+  var shipColor = 'cyan';
+  var shipWidth = 30;
+  var shipHeight = 10;
+  var shipX = (canvas.width - shipWidth) / 2
+  var shipY = canvas.height - shipHeight;
+
+  var gunWidth = 6;
+  var gunHeight = 5;
+  var leftGunX = shipX;
+  var rightGunX = shipX + shipWidth - gunWidth;
+  var gunsY = shipY - gunHeight;
+
+  var bulletColor = 'red';
+  var bulletWidth = 3;
+  var bulletHeight = 5;
+  var bulletY = gunsY - bulletHeight;
+  var bulletCount = 10;
+  var firstFire = true;
+  var bulletStatus = 1;
+  var leftBulletX = leftGunX + ((gunWidth - bulletWidth) / 2);
+  var rightBulletX = rightGunX + ((gunWidth - bulletWidth) / 2);
+
+  var enemiesColor = 'red';
+  var enemiesColumnCount = 10;
+  var enemiesRowCount = 3;
+  var enemyWidth = 20;
+  var enemyHeight = 10;
+  var enemyPadding = 30;
+  var enemyOffsetTop = 30;
+  var enemyOffsetLeft = 30;
+  var enemies = [];
+
+  for (c = 0; c < enemiesColumnCount; c++) {
+    enemies[c] = [];
+    for (r = 0; r < enemiesRowCount; r++) {
+      enemies[c][r] = { x: 0, y: 0, status: 1};
+    }
+  }
+
+  var rightPressed = false;
+  var leftPressed = false;
+
+  document.addEventListener('keydown', function(e) {
+    if (e.keyCode === 39) {
+      rightPressed = true;
+    } else if (e.keyCode === 37) {
+      leftPressed = true;
+    }
+  }, false);
+
+  document.addEventListener('keyup', function(e) {
+    if (e.keyCode === 39) {
+      rightPressed = false;
+    } else if (e.keyCode === 37) {
+      leftPressed = false;
+    }
+  }, false);
+
+  document.addEventListener('mousemove', function(e) {
+    var relativeX = e.clientX - canvas.offsetLeft;
+    if (relativeX > 0 && relativeX < canvas.width) {
+      shipX = relativeX - shipWidth / 2;
+      leftGunX = shipX;
+      rightGunX = shipX + shipWidth - gunWidth;
+    }
+  }, false);
+
+  function drawScore() {
+    ctx.font = '16px arial';
+    ctx.fillStyle = '#0095DD';
+    ctx.fillText('Score: ' + score, 8, 20);
+  }
+
+  function drawEnemies() {
+    for (c = 0; c < enemiesColumnCount; c++) {
+      for (r = 0; r < enemiesRowCount; r++) {
+        if (enemies[c][r].status === 1) {
+          var enemyX = (c * (enemyWidth + enemyPadding)) + enemyOffsetLeft;
+          var enemyY = (r * (enemyHeight + enemyPadding)) + enemyOffsetTop;
+          enemies[c][r].x = enemyX;
+          enemies[c][r].y = enemyY;
+
+          ctx.beginPath();
+          ctx.rect(enemyX, enemyY, enemyWidth, enemyHeight);
+          ctx.fillStyle = enemiesColor;
+          ctx.fill();
+          ctx.closePath();
+        }
+      }
+    }
+  }
+
+  function collisionDetection(blx, brx) {
+    for (c = 0; c < enemiesColumnCount; c++) {
+      for (r = 0; r < enemiesRowCount; r++) {
+        var e = enemies[c][r];
+        if (e.status === 1) {
+          if ((blx > e.x && blx < e.x + enemyWidth && bulletY > e.y && bulletY < e.y + enemyHeight)
+           || (brx > e.x && brx < e.x + enemyWidth && bulletY > e.y && bulletY < e.y + enemyHeight)) {
+            score++;
+            initBullet();
+            e.status = 0;
+            if (score === enemiesColumnCount * enemiesRowCount) {
+              alert('You Win! Congratulations!');
+              document.location.reload();
+            }
+          }
+        }
+      }
+    }
+  }
+
+  function drawBullet(leftX, rightX) {
+    ctx.beginPath();
+    ctx.rect(leftX, bulletY, bulletWidth, bulletHeight);
+    ctx.rect(rightX, bulletY, bulletWidth, bulletHeight);
+    ctx.fillStyle = bulletColor;
+    ctx.fill();
+    ctx.closePath();
+  }
+
+  function initBullet() {
+    bulletY = gunsY - bulletHeight;
+    leftBulletX = leftGunX + ((gunWidth - bulletWidth) / 2);
+    rightBulletX = rightGunX + ((gunWidth - bulletWidth) / 2);
+  }
+
+  function drawShip() {
+    ctx.beginPath();
+    // body of ship
+    ctx.rect(shipX, shipY, shipWidth, shipHeight);
+    // left gun of ship
+    ctx.rect(leftGunX, gunsY, gunWidth, gunHeight);
+    // right gun of ship
+    ctx.rect(rightGunX, gunsY, gunWidth, gunHeight);
+    ctx.fillStyle = shipColor;
+    ctx.fill();
+    ctx.closePath();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawShip();
+    drawBullet(leftBulletX, rightBulletX);
+    drawEnemies();
+    collisionDetection(leftBulletX, rightBulletX);
+    drawScore();
+    bulletY -= 2;
+
+    if (rightPressed && shipX + shipWidth < canvas.width) {
+      shipX = leftGunX += 7;
+      rightGunX += 7;
+    } else if (leftPressed && shipX > 0) {
+      shipX = leftGunX -= 7;
+      rightGunX -= 7;
+    }
+
+    if (bulletY < 0) {
+      initBullet();
+    }
+  }
+
+  setInterval(draw, 10);
+</script>
+
+</body>
+</html>
