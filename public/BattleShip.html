@@ -16,9 +16,11 @@
 	var canvas = document.getElementById('myCanvas');
   var ctx = canvas.getContext('2d');
 
+  var theEnd = false;
   var retry = true;
   var score = 0;
   var lives = 3;
+  var level = 1;
 
   var shipColor = 'cyan';
   var shipWidth = 30;
@@ -43,11 +45,11 @@
   var rightBulletX = rightGunX + ((gunWidth - bulletWidth) / 2);
 
   var enemiesColor = 'red';
-  var enemiesColumnCount = 9;
-  var enemiesRowCount = 3;
-  var enemyWidth = 20;
+  var enemiesColumnCount = 7;
+  var enemiesRowCount = 2;
+  var enemyWidth = 30;
   var enemyHeight = 10;
-  var enemyPadding = 30;
+  var enemyPadding = 36;
   var enemyOffsetTop = 30;
   var enemyOffsetLeft = 30;
   var enemiesMoving = 0;
@@ -57,14 +59,19 @@
   var enemiesAttackX = -1;
   var enemiesAttackY = -1;
   var ed = 0.3;
+  var eaSpeed = 9;
   var enemies = [];
 
-  for (c = 0; c < enemiesColumnCount; c++) {
-    enemies[c] = [];
-    for (r = 0; r < enemiesRowCount; r++) {
-      enemies[c][r] = { x: 0, y: 0, status: 1 };
+  function initEnemies() {
+    for (c = 0; c < enemiesColumnCount; c++) {
+      enemies[c] = [];
+      for (r = 0; r < enemiesRowCount; r++) {
+        enemies[c][r] = { x: 0, y: 0, status: 1 };
+      }
     }
   }
+
+  initEnemies();
 
   var rightPressed = false;
   var leftPressed = false;
@@ -103,7 +110,13 @@
   function drawLives() {
     ctx.font = '16px arial';
     ctx.fillStyle = '#0095DD';
-    ctx.fillText('Lives: ' + lives, canvas.width - 65, 20); // fillText(text, x, y);
+    ctx.fillText('Lives: ' + lives, canvas.width / 2 - 30, 20); // fillText(text, x, y);
+  }
+
+  function drawLevel() {
+    ctx.font = '16px arial';
+    ctx.fillStyle = '#0095DD';
+    ctx.fillText('Level: ' + level, canvas.width - 65, 20); // fillText(text, x, y);
   }
 
   function drawEnemies() {
@@ -148,9 +161,23 @@
             score++;
             initBullet();
             e.status = 0;
-            if (score === enemiesColumnCount * enemiesRowCount) {
-              alert('You Win! Congratulations!');
-              document.location.reload();
+            if (score === enemiesColumnCount * enemiesRowCount * level) {
+              alert('Level UP!!');
+              // level up
+              level += 1;
+              enemyWidth -= 2;
+              shipWidth += 5;
+              shipHeight += 2;
+              eaSpeed += 0.5;
+
+              initEnemies();
+
+              if (!retry && enemyWidth <= 0) {
+                alert('Congraturation!\n You Finished All stages!');
+                theEnd = true;
+              } else {
+                draw();
+              }
             }
           }
         }
@@ -206,18 +233,22 @@
   }
 
   function draw() {
+    if (theEnd) {
+      return;
+    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawShip();
     drawBullet(leftBulletX, rightBulletX);
     var enemiesAttackX = drawEnemies();
     if (enemiesAttackX !== -1 && enemiesAttackY !== -1) {
       drawAttack(enemiesAttackX);
-      enemiesAttackY += 9;
+      enemiesAttackY += eaSpeed;
     }
     attackedDetection(enemiesAttackX);
     collisionDetection(leftBulletX, rightBulletX);
     drawScore();
     drawLives();
+    drawLevel();
     bulletY -= 2;
 
     if (lives === 0) {
@@ -244,9 +275,7 @@
     requestAnimationFrame(draw);
   }
 
-  if (retry) {
-    draw();
-  }
+  draw();
 </script>
 
 </body>
