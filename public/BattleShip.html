@@ -50,13 +50,17 @@
   var enemyOffsetLeft = 30;
   var enemiesMoving = 0;
   var enemiesMovingLimit = 15;
+  var enemiesAttackWidth = 5;
+  var enemiesAttackHeight = 10;
+  var enemiesAttackX = -1;
+  var enemiesAttackY = -1;
   var ed = 0.3;
   var enemies = [];
 
   for (c = 0; c < enemiesColumnCount; c++) {
     enemies[c] = [];
     for (r = 0; r < enemiesRowCount; r++) {
-      enemies[c][r] = { x: 0, y: 0, status: 1};
+      enemies[c][r] = { x: 0, y: 0, status: 1 };
     }
   }
 
@@ -95,7 +99,6 @@
   }
 
   function drawEnemies() {
-
     for (c = 0; c < enemiesColumnCount; c++) {
       for (r = 0; r < enemiesRowCount; r++) {
         if (enemies[c][r].status === 1) {
@@ -103,6 +106,11 @@
           var enemyY = (r * (enemyHeight + enemyPadding)) + enemyOffsetTop;
           enemies[c][r].x = enemyX;
           enemies[c][r].y = enemyY;
+          var attack = (Math.random() * 20) < 1;
+          if (attack && enemiesAttackY === -1) {
+            enemiesAttackX = enemyX;
+            enemiesAttackY = enemyY;
+          }
 
           ctx.beginPath();
           ctx.rect(enemyX, enemyY, enemyWidth, enemyHeight);
@@ -118,6 +126,8 @@
       ed = -ed;
     }
     enemiesMoving += ed;
+
+    return enemiesAttackX;
   }
 
   function collisionDetection(blx, brx) {
@@ -137,6 +147,18 @@
           }
         }
       }
+    }
+  }
+
+  function attackedDetection(attackX) {
+    if (enemiesAttackY > canvas.height) {
+      enemiesAttackX = -1;
+      enemiesAttackY = -1;
+    }
+
+    if (attackX > shipX && attackX < shipX + shipWidth && enemiesAttackY > shipY && enemiesAttackY < shipY + shipHeight) {
+      alert('Game Over!');
+      document.location.reload();
     }
   }
 
@@ -168,14 +190,28 @@
     ctx.closePath();
   }
 
+  function drawAttack(attackX) {
+    ctx.beginPath();
+    ctx.rect(attackX, enemiesAttackY, enemiesAttackWidth, enemiesAttackHeight);
+    ctx.fillStyle = enemiesColor;
+    ctx.fill();
+    ctx.closePath();
+  }
+
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawShip();
     drawBullet(leftBulletX, rightBulletX);
-    drawEnemies();
+    var enemiesAttackX = drawEnemies();
+    if (enemiesAttackX !== -1 && enemiesAttackY !== -1) {
+      drawAttack(enemiesAttackX);
+      enemiesAttackY += 8;
+    }
+    attackedDetection(enemiesAttackX);
     collisionDetection(leftBulletX, rightBulletX);
     drawScore();
     bulletY -= 2;
+
 
     if (rightPressed && shipX + shipWidth < canvas.width) {
       shipX = leftGunX += 7;
