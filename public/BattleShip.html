@@ -41,13 +41,16 @@
   var rightBulletX = rightGunX + ((gunWidth - bulletWidth) / 2);
 
   var enemiesColor = 'red';
-  var enemiesColumnCount = 10;
+  var enemiesColumnCount = 9;
   var enemiesRowCount = 3;
   var enemyWidth = 20;
   var enemyHeight = 10;
   var enemyPadding = 30;
   var enemyOffsetTop = 30;
   var enemyOffsetLeft = 30;
+  var enemiesMoving = 0;
+  var enemiesMovingLimit = 15;
+  var ed = 0.3;
   var enemies = [];
 
   for (c = 0; c < enemiesColumnCount; c++) {
@@ -92,10 +95,11 @@
   }
 
   function drawEnemies() {
+
     for (c = 0; c < enemiesColumnCount; c++) {
       for (r = 0; r < enemiesRowCount; r++) {
         if (enemies[c][r].status === 1) {
-          var enemyX = (c * (enemyWidth + enemyPadding)) + enemyOffsetLeft;
+          var enemyX = (c * (enemyWidth + enemyPadding)) + enemyOffsetLeft + enemiesMoving;
           var enemyY = (r * (enemyHeight + enemyPadding)) + enemyOffsetTop;
           enemies[c][r].x = enemyX;
           enemies[c][r].y = enemyY;
@@ -108,6 +112,12 @@
         }
       }
     }
+    if (enemiesMoving > enemiesMovingLimit) {
+      ed = -ed;
+    } else if (enemiesMoving < enemiesMovingLimit * (-1)) {
+      ed = -ed;
+    }
+    enemiesMoving += ed;
   }
 
   function collisionDetection(blx, brx) {
@@ -178,9 +188,11 @@
     if (bulletY < 0) {
       initBullet();
     }
+
+    requestAnimationFrame(draw);
   }
 
-  setInterval(draw, 10);
+  draw();
 </script>
 
 </body>
